@@ -36,10 +36,12 @@ server.use(cors({
 
 server.use(async (ctx, next)=>{
     try{
-        console.log(ctx);
+        //console.log(ctx);
+        console.log(ctx.request.body);
         await next();
     }catch(e){
-        ctx.throw("500","服务器错误");
+        console.log("e:",e.message);
+        ctx.throw(e.status,e.message);
     }
 });
 

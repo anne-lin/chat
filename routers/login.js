@@ -13,19 +13,12 @@ function checkInfo(name,password){
 }
 
 router.post("/login",async (ctx)=>{
-    console.log("body:",typeof JSON.parse(ctx.request.body));
-    console.log("body:", JSON.parse(ctx.request.body));
-
-    let body=JSON.parse(ctx.request.body);
+    let body=ctx.request.body;
     let checkInfoResult=checkInfo(body.username,body.password);
     if(checkInfoResult){
-        ctx.body={
-          code:"-1",
-          desc:checkInfoResult
-        };
+        ctx.throw (400,checkInfoResult);
     }
     let data=await ctx.db.query(`SELECT user_pass FROM user_table WHERE user_name='${body.username}'`);
-    console.log(data);
     if(data.length && data[0]["user_pass"]==body.password){
         if(ctx.session['admin'] && ctx.session['admin'] == body.username){
             ctx.body={
@@ -47,7 +40,7 @@ router.post("/login",async (ctx)=>{
     }
 });
 router.post("/reg",async (ctx)=>{
-    console.log(reg);
+    console.log("reg:",ctx.request.body);
     ctx.body={
         code:"-1",
         desc:"此用户名已被占用"
