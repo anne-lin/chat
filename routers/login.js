@@ -16,8 +16,9 @@ router.post("/login",async (ctx)=>{
     let body=ctx.request.body;
     let checkInfoResult=checkInfo(body.username,body.password);
     if(checkInfoResult){
-        ctx.throw (400,checkInfoResult);
+        ctx.throw (500,checkInfoResult);
     }
+    console.log("执行");
     let data=await ctx.db.query(`SELECT user_pass FROM user_table WHERE user_name='${body.username}'`);
     if(data.length && data[0]["user_pass"]==body.password){
         if(ctx.session['admin'] && ctx.session['admin'] == body.username){

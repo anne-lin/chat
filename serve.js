@@ -1,5 +1,4 @@
 const Koa = require('koa');
-//const bodyParser = require('koa-bodyparser');
 const Router=require('koa-router');
 const cors=require("koa2-cors");
 const config=require("./config");
@@ -36,12 +35,12 @@ server.use(cors({
 
 server.use(async (ctx, next)=>{
     try{
-        //console.log(ctx);
         console.log(ctx.request.body);
         await next();
-    }catch(e){
-        console.log("e:",e.message);
-        ctx.throw(e.status,e.message);
+    }catch(err){
+        ctx.status = err.status || 500;
+        ctx.body=err.message;
+        ctx.app.emit('error', err, ctx);
     }
 });
 
