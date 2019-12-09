@@ -1,31 +1,28 @@
 const Router=require('koa-router');
+const {AuthenticationError}=require("../lib/errorClass");
+const {checkMysqlHandle}=require("../lib/common");
 
 let router=new Router();
 
 function checkInfo(name,password){
     if(!name){
-        return "用户名不存在";
+        throw new AuthenticationError(500,"用户名不存在");
     }
     if(!password){
-        return "密码为空";
+        throw new AuthenticationError(500,"密码为空");
     }
-    return false;
+    return true;
 }
 
 router.post("/login",async (ctx)=>{
     let body=ctx.request.body;
-    let checkInfoResult=checkInfo(body.username,body.password);
-    if(checkInfoResult){
-        ctx.throw (500,checkInfoResult);
+    if(!checkInfo(body.username,body.password)){
+        return ;
     }
-    console.log("执行");
-    let data=await ctx.db.query(`SELECT user_pass FROM user_table WHERE user_name='${body.username}'`);
+    let data=await checkMysqlHandle(ctx.db.query,`SELECT user_pass FROM user_table WHERE user_name='${body.username}'`);
     if(data.length && data[0]["user_pass"]==body.password){
         if(ctx.session['admin'] && ctx.session['admin'] == body.username){
-            ctx.body={
-                code:"-1",
-                desc:"用户已登录"
-            };
+            throw new AuthenticationError(500,"用户已登录");
         }else{
             ctx.session['admin']=body.username;
             ctx.body={
@@ -34,33 +31,19 @@ router.post("/login",async (ctx)=>{
             };
         }
     }else {
-        ctx.body={
-            code:"0",
-            desc:"登录失败,密码错误"
-        };
+        throw new AuthenticationError(500,"登录失败,密码错误");
     }
 });
 router.post("/reg",async (ctx)=>{
-    console.log("reg:",ctx.request.body);
-    ctx.body={
-        code:"-1",
-        desc:"此用户名已被占用"
-    };
-    let checkInfoResult=checkInfo(ctx.request.username,ctx.request.password),data;
-    if(checkInfoResult){
-        ctx.body={
-            code:"-1",
-            desc:checkInfoResult
-        };
+    let body=ctx.request.body;
+    if(!checkInfo(body.username,body.password)){
+        return ;
     }
-    data=await ctx.db.query(`SELECT id FROM user_table WHERE user_name='${ctx.request.username}'`);
+    data=await checkMysqlHandle(ctx.db.query,`SELECT id FROM user_table WHERE user_name='${body.username}'`);
     if(data.length){
-        ctx.body={
-            code:"-1",
-            desc:"此用户名已被占用"
-        };
+        throw new AuthenticationError(500,"此用户名已被占用");
     }else {
-        data=await ctx.db.query(`INSERT INTO user_table (user_name, user_pass) VALUES('${ctx.request.username}', '${ctx.request.password}')`);
+        data=await checkMysqlHandle(ctx.db.query,`INSERT INTO user_table (user_name, user_pass) VALUES('${body.username}', '${body.password}')`);
         ctx.body={
             code:"0",
             desc:"注册成功"

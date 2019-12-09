@@ -11,7 +11,6 @@ let server=new Koa();
 server.context.db=require("./lib/database");
 server.context.config=config;
 
-
 //设置cookie随机数
 server.keys=fs.readFileSync('.keys').toString().split('\n');
 
@@ -35,14 +34,12 @@ server.use(cors({
 
 server.use(async (ctx, next)=>{
     try{
-        console.log(ctx.request.body);
         await next();
     }catch(err){
-        ctx.status = err.status || 500;
-        ctx.body=err.message;
-        ctx.app.emit('error', err, ctx);
+        ctx.app.emit("error",err,ctx);
     }
 });
+server.on('error',require("./lib/onError"));
 
 router.use("/loginInfo",require("./routers/login"));
 server.use(router.routes());
